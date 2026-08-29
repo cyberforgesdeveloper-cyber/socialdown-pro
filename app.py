@@ -42,16 +42,14 @@ def download_media():
         return jsonify({"status": "error", "message": "Please provide a valid URL!"})
 
     try:
-        # Check if cookies file exists locally
-        cookie_path = 'cookies.txt' if os.path.exists('cookies.txt') else None
-
         if quality == 'audio':
             save_path = os.path.join(DOWNLOAD_DIR, 'Audio')
             os.makedirs(save_path, exist_ok=True)
             ydl_opts = {
                 'format': 'bestaudio/best',
                 'outtmpl': os.path.join(save_path, '%(title)s.%(ext)s'),
-                'postprocessors': [{'key': 'FFmpegExtractAudio', 'preferredcodec': 'mp3'}]
+                'postprocessors': [{'key': 'FFmpegExtractAudio', 'preferredcodec': 'mp3'}],
+                'extractor_args': {'youtube': {'player_client': ['android', 'web']}},
             }
         elif platform_type == 'youtube':
             save_path = os.path.join(DOWNLOAD_DIR, 'YouTube')
@@ -60,17 +58,14 @@ def download_media():
             ydl_opts = {
                 'format': f'bestvideo[height<={h}]+bestaudio/best[height<={h}]/best',
                 'outtmpl': os.path.join(save_path, '%(title)s.%(ext)s'),
-                'merge_output_format': 'mp4'
+                'merge_output_format': 'mp4',
+                'extractor_args': {'youtube': {'player_client': ['android', 'web']}},
             }
         else:
             save_path = os.path.join(DOWNLOAD_DIR, 'SocialMedia')
             ydl_opts = {
                 'outtmpl': os.path.join(save_path, '%(title).50s.%(ext)s'),
             }
-
-        # Agar cookies file maujood hai toh ydl_opts mein shamil kar dein
-        if cookie_path:
-            ydl_opts['cookiefile'] = cookie_path
 
         os.makedirs(save_path, exist_ok=True)
 
