@@ -41,10 +41,7 @@ def download_media():
         return jsonify({"status": "error", "message": "Please provide a valid URL!"})
 
     try:
-        # Cookies file path check
-        cookie_path = os.path.abspath('cookies.txt')
-        if not os.path.exists(cookie_path):
-            cookie_path = None
+        cookie_path = 'cookies.txt' if os.path.exists('cookies.txt') else None
 
         if quality == 'audio':
             save_path = os.path.join(DOWNLOAD_DIR, 'Audio')
@@ -53,6 +50,9 @@ def download_media():
                 'format': 'bestaudio/best',
                 'outtmpl': os.path.join(save_path, '%(title)s.%(ext)s'),
                 'postprocessors': [{'key': 'FFmpegExtractAudio', 'preferredcodec': 'mp3'}],
+                'http_headers': {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                },
             }
         else:
             save_path = os.path.join(DOWNLOAD_DIR, 'YouTube')
@@ -60,9 +60,11 @@ def download_media():
                 'format': 'best',
                 'outtmpl': os.path.join(save_path, '%(title)s.%(ext)s'),
                 'extractor_args': {'youtube': {'player_client': ['android', 'web']}},
+                'http_headers': {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                },
             }
 
-        # Agar cookies file maujood hai toh ydl_opts mein lazmi lagayein
         if cookie_path:
             ydl_opts['cookiefile'] = cookie_path
 
