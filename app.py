@@ -1,5 +1,6 @@
 import os
 import sqlite3
+import base64
 from flask import Flask, render_template, request, jsonify
 import yt_dlp
 from pathlib import Path
@@ -8,6 +9,16 @@ app = Flask(__name__, template_folder='templates')
 
 DOWNLOAD_DIR = os.path.join(str(Path.home()), "Downloads", "SocialDown_Pro")
 os.makedirs(DOWNLOAD_DIR, exist_ok=True)
+
+# Render environment variable se cookies ko runtime par generate karna
+COOKIE_FILE_PATH = 'cookies.txt'
+env_cookies = os.environ.get('YOUTUBE_COOKIES')
+if env_cookies:
+    try:
+        with open(COOKIE_FILE_PATH, 'wb') as f:
+            f.write(base64.b64decode(env_cookies))
+    except Exception as e:
+        print(f"Error decoding cookies: {e}")
 
 DB_PATH = "history.db"
 def init_db():
@@ -41,7 +52,7 @@ def download_media():
         return jsonify({"status": "error", "message": "Please provide a valid URL!"})
 
     try:
-        cookie_path = 'cookies.txt' if os.path.exists('cookies.txt') else None
+        cookie_path = COOKIE_FILE_PATH if os.path.exists(COOKIE_FILE_PATH) else None
 
         if quality == 'audio':
             save_path = os.path.join(DOWNLOAD_DIR, 'Audio')
@@ -50,9 +61,6 @@ def download_media():
                 'format': 'bestaudio/best',
                 'outtmpl': os.path.join(save_path, '%(title)s.%(ext)s'),
                 'postprocessors': [{'key': 'FFmpegExtractAudio', 'preferredcodec': 'mp3'}],
-                'http_headers': {
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                },
             }
         else:
             save_path = os.path.join(DOWNLOAD_DIR, 'YouTube')
@@ -60,9 +68,6 @@ def download_media():
                 'format': 'best',
                 'outtmpl': os.path.join(save_path, '%(title)s.%(ext)s'),
                 'extractor_args': {'youtube': {'player_client': ['android', 'web']}},
-                'http_headers': {
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                },
             }
 
         if cookie_path:
