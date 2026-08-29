@@ -4,7 +4,6 @@ from flask import Flask, render_template, request, jsonify
 import yt_dlp
 from pathlib import Path
 
-# Flask ko explicitly bata diya hai taake template folder ka koi error na aaye
 app = Flask(__name__, template_folder='templates')
 
 DOWNLOAD_DIR = os.path.join(str(Path.home()), "Downloads", "SocialDown_Pro")
@@ -42,7 +41,10 @@ def download_media():
         return jsonify({"status": "error", "message": "Please provide a valid URL!"})
 
     try:
-        cookie_path = 'cookies.txt' if os.path.exists('cookies.txt') else None
+        # Cookies file path check
+        cookie_path = os.path.abspath('cookies.txt')
+        if not os.path.exists(cookie_path):
+            cookie_path = None
 
         if quality == 'audio':
             save_path = os.path.join(DOWNLOAD_DIR, 'Audio')
@@ -53,14 +55,14 @@ def download_media():
                 'postprocessors': [{'key': 'FFmpegExtractAudio', 'preferredcodec': 'mp3'}],
             }
         else:
-            # Sabhi video formats ke liye simple aur stable 'best' option taake error na aaye
-            save_path = os.path.join(DOWNLOAD_DIR, 'Video')
+            save_path = os.path.join(DOWNLOAD_DIR, 'YouTube')
             ydl_opts = {
                 'format': 'best',
                 'outtmpl': os.path.join(save_path, '%(title)s.%(ext)s'),
                 'extractor_args': {'youtube': {'player_client': ['android', 'web']}},
             }
 
+        # Agar cookies file maujood hai toh ydl_opts mein lazmi lagayein
         if cookie_path:
             ydl_opts['cookiefile'] = cookie_path
 
