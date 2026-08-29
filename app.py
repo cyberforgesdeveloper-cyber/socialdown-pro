@@ -42,6 +42,9 @@ def download_media():
         return jsonify({"status": "error", "message": "Please provide a valid URL!"})
 
     try:
+        # Check if cookies file exists locally for bypassing bot check
+        cookie_path = 'cookies.txt' if os.path.exists('cookies.txt') else None
+
         if quality == 'audio':
             save_path = os.path.join(DOWNLOAD_DIR, 'Audio')
             os.makedirs(save_path, exist_ok=True)
@@ -66,6 +69,10 @@ def download_media():
             ydl_opts = {
                 'outtmpl': os.path.join(save_path, '%(title).50s.%(ext)s'),
             }
+
+        # Agar cookies file maujood hai toh ydl_opts mein shamil kar dein
+        if cookie_path:
+            ydl_opts['cookiefile'] = cookie_path
 
         os.makedirs(save_path, exist_ok=True)
 
