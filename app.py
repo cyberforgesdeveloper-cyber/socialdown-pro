@@ -4,7 +4,8 @@ from flask import Flask, render_template, request, jsonify
 import yt_dlp
 from pathlib import Path
 
-app = Flask(__name__)
+# Flask ko explicitly bata diya hai taake template folder ka koi error na aaye
+app = Flask(__name__, template_folder='templates')
 
 DOWNLOAD_DIR = os.path.join(str(Path.home()), "Downloads", "SocialDown_Pro")
 os.makedirs(DOWNLOAD_DIR, exist_ok=True)
