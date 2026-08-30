@@ -7,19 +7,21 @@ from pathlib import Path
 
 app = Flask(__name__, template_folder='templates')
 
+# Download directory setup
 DOWNLOAD_DIR = os.path.join(str(Path.home()), "Downloads", "SocialDown_Pro")
 os.makedirs(DOWNLOAD_DIR, exist_ok=True)
 
-# Render environment variable se cookies ko runtime par generate karna
+# Safe Base64 Cookie Decoder for Render Environment Variable
 COOKIE_FILE_PATH = 'cookies.txt'
 env_cookies = os.environ.get('YOUTUBE_COOKIES')
 if env_cookies:
     try:
         with open(COOKIE_FILE_PATH, 'wb') as f:
-            f.write(base64.b64decode(env_cookies))
+            f.write(base64.b64decode(env_cookies.strip()))
     except Exception as e:
-        print(f"Error decoding cookies: {e}")
+        print(f"Cookie decode error: {e}")
 
+# Initialize SQLite Database for History
 DB_PATH = "history.db"
 def init_db():
     conn = sqlite3.connect(DB_PATH)
@@ -79,6 +81,7 @@ def download_media():
             info = ydl.extract_info(url, download=True)
             title = info.get('title', 'Media File')
 
+        # Save to History Database
         conn = sqlite3.connect(DB_PATH)
         cursor = conn.cursor()
         cursor.execute("INSERT INTO downloads (title, platform) VALUES (?, ?)", (title, platform_type))
