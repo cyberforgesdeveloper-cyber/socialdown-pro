@@ -11,7 +11,7 @@ app = Flask(__name__, template_folder='templates')
 DOWNLOAD_DIR = os.path.join(str(Path.home()), "Downloads", "SocialDown_Pro")
 os.makedirs(DOWNLOAD_DIR, exist_ok=True)
 
-# Safe Base64 Cookie Decoder for Render Environment Variable
+# Safe Base64 Cookie Decoder for Render / PythonAnywhere Environment Variable
 COOKIE_FILE_PATH = 'cookies.txt'
 env_cookies = os.environ.get('YOUTUBE_COOKIES')
 if env_cookies:
@@ -56,30 +56,40 @@ def download_media():
     try:
         cookie_path = COOKIE_FILE_PATH if os.path.exists(COOKIE_FILE_PATH) else None
 
+        # Common headers and options to bypass 403 / IP block errors on cloud servers
+        common_ydl_opts = {
+            'extractor_args': {'youtube': {'player_client': ['android', 'web']}},
+            'http_headers': {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+                'Accept-Language': 'en-US,en;q=0.9',
+            }
+        }
+
         if quality == 'audio':
             save_path = os.path.join(DOWNLOAD_DIR, 'Audio')
             os.makedirs(save_path, exist_ok=True)
             ydl_opts = {
+                **common_ydl_opts,
                 'format': 'bestaudio/best',
                 'outtmpl': os.path.join(save_path, '%(title)s.%(ext)s'),
                 'postprocessors': [{'key': 'FFmpegExtractAudio', 'preferredcodec': 'mp3'}],
             }
         else:
             save_path = os.path.join(DOWNLOAD_DIR, 'YouTube')
+            os.makedirs(save_path, exist_ok=True)
             ydl_opts = {
+                **common_ydl_opts,
                 'format': 'best',
                 'outtmpl': os.path.join(save_path, '%(title)s.%(ext)s'),
-                'extractor_args': {'youtube': {'player_client': ['android', 'web']}},
             }
 
         if cookie_path:
             ydl_opts['cookiefile'] = cookie_path
 
-        os.makedirs(save_path, exist_ok=True)
-
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            info = ydl.extract_info(url, download=True)
+            info = yt_dlp.YoutubeDL(common_ydl_opts).extract_info(url, download=False) # Quick info fetch
             title = info.get('title', 'Media File')
+            ydl.download([url])
 
         # Save to History Database
         conn = sqlite3.connect(DB_PATH)
